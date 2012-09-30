@@ -1,7 +1,14 @@
-﻿Usage
+﻿BoundaryCanvas is a plugin for [Leaflet](http://leaflet.cloudmade.com/) mapping library to draw tiled raster layers with arbitrary boundary. HTML5 Canvas is used for rendering.
+
+Demos
+--------
+
+* [Draw boundary of a raster layer yourself] (http://aparshin.github.com/leaflet-boundary-canvas/examples/canvas-boundary-edit.html)
+* [A multipolygon with holes as a border] (http://aparshin.github.com/leaflet-boundary-canvas/examples/canvas-boundary.html)
+
+Usage
 -----
 
-BoundaryCanvas is class to draw tiled raster layers with arbitrary boundary. HTML5 Canvas is used for rendering.
 ```javascript
 var osm = new L.TileLayer.BoundaryCanvas(tileLayerUrl, options);
 map.addLayer(osm);
@@ -18,7 +25,7 @@ where
 All rings of boundary should be without self-intersections or intersections with other rings. Zero-winding fill 
 algorithm is used in canvas, so holes should have opposite direction to exterior ring.
  
-Example
+Code Example
 -------
 
 ```javascript

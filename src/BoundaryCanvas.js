@@ -166,10 +166,11 @@
         return this._boundaryCache[cacheID];
     },
 
-	drawTile: function (canvas, tilePoint, zoom) {
+	drawTile: function (canvas, tilePoint) {
         var ts = this.options.tileSize,
             tileX = ts * tilePoint.x,
             tileY = ts * tilePoint.y,
+            zoom = this._getZoomForUrl(),
             zCoeff = Math.pow(2, zoom),
             ctx = canvas.getContext('2d'),
             imageObj = new Image(),

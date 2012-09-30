@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet debug page</title>
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4.4/leaflet.css" />
+
+    <link rel="stylesheet" href="leaflet.draw/leaflet.draw.css" />
+
+    <script src="http://cdn.leafletjs.com/leaflet-0.4.4/leaflet.js"></script>
+	<script src="leaflet.draw/leaflet.draw.js"></script>
+
+	<script src="../src/BoundaryCanvas.js"></script>
+</head>
+
+<body>
+    <div style="font-weight:bold;">Draw polygons or rectangles to see parts of the map</div>
+	<div id="map" style="width: 800px; height: 500px; border: 1px solid #ccc;"></div>
+
+	<script type="text/javascript">
+
+    var map = new L.Map('map'),
+        cloudmadeUrl = 'http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png',
+        cloudmadeAttribution = 'Map data &copy; 2011 OpenStreetMap contributors, Imagery &copy; 2011 CloudMade';
+
+    var drawControl = new L.Control.Draw({
+        position: 'topright',
+        marker: null,
+        polyline: null,
+        circle: null,
+        polygon: {
+            title: 'Draw layer boundary',
+            allowIntersection: false,
+            drawError: {
+                color: '#b00b00',
+                timeout: 1000
+            },
+            shapeOptions: {
+                color: '#bada55'
+            }
+        }
+    });
+    map.addControl(drawControl);
+    map.on('draw:poly-created', function (e) {
+        var osm = new L.TileLayer.BoundaryCanvas(cloudmadeUrl, {boundary: e.poly.getLatLngs(), attribution: cloudmadeAttribution});
+        osm.addTo(map);
+    });
+
+    map.on('draw:rectangle-created', function (e) {
+        var osm = new L.TileLayer.BoundaryCanvas(cloudmadeUrl, {boundary: e.rect.getLatLngs(), attribution: cloudmadeAttribution});
+        osm.addTo(map);
+    });
+
+    map.setView(new L.LatLng(55.7, 37.4), 9);
+
+	</script>
+</body>
+</html>

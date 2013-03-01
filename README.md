@@ -14,27 +14,28 @@ var osm = new L.TileLayer.BoundaryCanvas(tileLayerUrl, options);
 map.addLayer(osm);
 ```
 where 
- * `tileLayerUrl` - URL similar to L.TileLayer
- * `options` - all L.TileLayer options and "boundary" option.
+ * `tileLayerUrl` - URL similar to `L.TileLayer`
+ * `options` - all `L.TileLayer` options and `boundary` option.
         
-"boundary" option can be
+`boundary` option can be
  * `LatLng[]` - simple polygon
  * `LatLng[][]` - polygon with holes
  * `LatLng[][][]` - multipolygon
 
 All rings of boundary should be without self-intersections or intersections with other rings. Zero-winding fill 
-algorithm is used in canvas, so holes should have opposite direction to exterior ring.
+algorithm is used in HTML5 Canvas, so holes should have opposite direction to exterior ring.
  
 Code Example
 -------
 
 ```javascript
-var latLngGeom = ...; \\Define real geometry here
-var map = new L.Map('map'),
-    cloudmadeUrl = 'http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png',
-    cloudmadeAttribution = 'Map data &copy; 2011 OpenStreetMap contributors, Imagery &copy; 2011 CloudMade';
+var latLngGeom = ...; //Define real geometry here
+var map = L.map('map').setView([55.7, 38], 7),
+    osmUrl = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+    osmAttribution = 'Map data &copy; 2012 OpenStreetMap contributors';
 
-var osm = new L.TileLayer.BoundaryCanvas(cloudmadeUrl, {boundary: latLngGeom, attribution: cloudmadeAttribution});
-
-map.setView(new L.LatLng(55.7, 38), 7).addLayer(osm);
+var osm = L.TileLayer.boundaryCanvas(osmUrl, {
+    boundary: latLngGeom, 
+    attribution: osmAttribution
+}).addTo(map);
 ```

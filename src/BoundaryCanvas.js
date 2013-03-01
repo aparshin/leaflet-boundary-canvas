@@ -218,3 +218,7 @@
         imageObj.src = this.getTileUrl(tilePoint, zoom);
 	}
 });
+
+L.TileLayer.boundaryCanvas = function (url, options) {
+	return new L.TileLayer.BoundaryCanvas(url, options);
+};

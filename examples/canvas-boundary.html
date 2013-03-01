@@ -3,12 +3,12 @@
 <head>
 	<title>Leaflet boundary canvas plugin example (multipolygon with holes)</title>
 
-    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4.4/leaflet.css" />
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.css" />
     <!--[if lte IE 8]>
-        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4.4/leaflet.ie.css" />
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.ie.css" />
     <![endif]-->
 
-    <script src="http://cdn.leafletjs.com/leaflet-0.4.4/leaflet.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.js"></script>
 
 	<script src="../src/BoundaryCanvas.js"></script>
 </head>
@@ -24,7 +24,7 @@
         
         [[[41.539307,57.370676], [43.077393,57.471439], [43.813477,57.329104], [43.692627,56.572696], [43.352051,55.664406], [41.978760,55.321357], [40.759278,55.352667], [40.111084,55.874975], [40.187989,56.536291], [40.627442,56.958829], [41.539307,57.370676]]]
     ]};
-    
+
     //convert test data to latlng array
     var latLngGeom = [],
         c, r, k;
@@ -37,15 +37,16 @@
             }
         }
     }
-    
-    var map = new L.Map('map'),
-        cloudmadeUrl = 'http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png',
-        cloudmadeAttribution = 'Map data &copy; 2011 OpenStreetMap contributors, Imagery &copy; 2011 CloudMade';
-    
-    var osm = new L.TileLayer.BoundaryCanvas(cloudmadeUrl, {boundary: latLngGeom, attribution: cloudmadeAttribution});
-    
-    map.setView(new L.LatLng(55.7, 38), 7).addLayer(osm);
-		
+
+    var map = L.map('map').setView([55.7, 38], 7),
+        osmUrl = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+        osmAttribution = 'Map data &copy; 2012 OpenStreetMap contributors';
+
+    var osm = L.TileLayer.boundaryCanvas(osmUrl, {
+		boundary: latLngGeom, 
+		attribution: osmAttribution
+	}).addTo(map);
+
 	</script>
 </body>
 </html>

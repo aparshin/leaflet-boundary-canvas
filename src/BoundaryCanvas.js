@@ -215,7 +215,8 @@
         imageObj.onload = function () {
             setTimeout(setPattern, 0); //IE9 bug - black tiles appear randomly if call setPattern() without timeout
         }
-        imageObj.src = this.getTileUrl(tilePoint, zoom);
+		this._adjustTilePoint(tilePoint);
+        imageObj.src = this.getTileUrl(tilePoint);
 	}
 });
 

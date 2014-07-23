@@ -11,6 +11,7 @@
 
 	initialize: function (url, options) {
 		L.Util.setOptions(this, options);
+		L.Util.setOptions(this, {async: true}); //image loading is always async
         this._url = url;
         this._boundaryCache = {}; //cache index "x:y:z"
         this._mercBoundary = null;
@@ -183,6 +184,7 @@
                 geom;
 
             if (state.isOut) {
+                _this.tileDrawn(canvas);
                 return;
             }
 
@@ -210,6 +212,7 @@
             ctx.rect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = pattern;
             ctx.fill();
+            _this.tileDrawn(canvas);
         };
         
         imageObj.onload = function () {

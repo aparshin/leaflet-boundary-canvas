@@ -1,23 +1,5 @@
-﻿L.TileLayer.BoundaryCanvas = L.TileLayer.Canvas.extend({
-	options: {
-        // all rings of boundary should be without self-intersections or intersections with other rings
-        // zero-winding fill algorithm is used in canvas, so holes should have opposite direction to exterior ring
-        // boundary can be
-        // LatLng[] - simple polygon
-        // LatLng[][] - polygon with holes
-        // LatLng[][][] - multipolygon
-        boundary: null
-	},
-
-	initialize: function (url, options) {
-		L.Util.setOptions(this, options);
-		L.Util.setOptions(this, {async: true}); //image loading is always async
-        this._url = url;
-        this._boundaryCache = {}; //cache index "x:y:z"
-        this._mercBoundary = null;
-        this._mercBbox = null;
-	},
-    
+﻿// L.TileLayer.BoundaryCanvas = L.TileLayer.Canvas.extend({
+var ExtendMethods = {
     //lazy calculation of layer's boundary in map's projection. Bounding box is also calculated
     _getOriginalMercBoundary: function () {
 
@@ -102,7 +84,7 @@
         var mercBoundary = this._getOriginalMercBoundary(),
             ts = this.options.tileSize,
             tileBbox = new L.Bounds(new L.Point(x * ts / zCoeff, y * ts / zCoeff), new L.Point((x + 1) * ts / zCoeff, (y + 1) * ts / zCoeff));
-
+            
         //fast check intersection
         if (!skipIntersectionCheck && !tileBbox.intersects(this._mercBbox)) {
             return {isOut: true};
@@ -118,7 +100,7 @@
         if (parentState.isOut || parentState.isIn) {
             return parentState;
         }
-
+        
         for (iC = 0; iC < parentState.geometry.length; iC++) {
             clippedComponent = [];
             clippedExternalRing = L.PolyUtil.clipPolygon(parentState.geometry[iC][0], tileBbox);
@@ -136,7 +118,7 @@
             }
             clippedGeom.push(clippedComponent);
         }
-
+        
         if (clippedGeom.length === 0) { //we are outside of all multipolygon components
             this._boundaryCache[cacheID] = {isOut: true};
             return this._boundaryCache[cacheID];
@@ -167,7 +149,7 @@
         return this._boundaryCache[cacheID];
     },
 
-	drawTile: function (canvas, tilePoint) {
+	_drawTileInternal: function (canvas, tilePoint, callback) {
         var ts = this.options.tileSize,
             tileX = ts * tilePoint.x,
             tileY = ts * tilePoint.y,
@@ -175,8 +157,9 @@
             zCoeff = Math.pow(2, zoom),
             ctx = canvas.getContext('2d'),
             imageObj = new Image(),
-            _this = this,
-            setPattern = function () {
+            _this = this;
+            
+        var setPattern = function () {
             
             var state = _this._getTileGeometry(tilePoint.x, tilePoint.y, zoom),
                 c, r, p,
@@ -184,7 +167,7 @@
                 geom;
 
             if (state.isOut) {
-                _this.tileDrawn(canvas);
+                callback();
                 return;
             }
 
@@ -212,16 +195,78 @@
             ctx.rect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = pattern;
             ctx.fill();
-            _this.tileDrawn(canvas);
+            //_this.tileDrawn(canvas);
+            callback();
         };
+        
+        if (this.options.crossOrigin) {
+            imageObj.crossOrigin = '';
+        }
         
         imageObj.onload = function () {
             setTimeout(setPattern, 0); //IE9 bug - black tiles appear randomly if call setPattern() without timeout
         }
-		this._adjustTilePoint(tilePoint);
+        
         imageObj.src = this.getTileUrl(tilePoint);
 	}
-});
+};
+
+if (L.version >= '0.8') {
+    L.TileLayer.BoundaryCanvas = L.TileLayer.extend({
+        options: {
+            // all rings of boundary should be without self-intersections or intersections with other rings
+            // zero-winding fill algorithm is used in canvas, so holes should have opposite direction to exterior ring
+            // boundary can be
+            // LatLng[] - simple polygon
+            // LatLng[][] - polygon with holes
+            // LatLng[][][] - multipolygon
+            boundary: null
+        },
+        includes: ExtendMethods,
+        initialize: function(url, options) {
+            L.TileLayer.prototype.initialize.call(this, url, options);
+            this._boundaryCache = {}; //cache index "x:y:z"
+            this._mercBoundary = null;
+            this._mercBbox = null;
+        },
+        createTile: function(coords, done){
+            var tile = document.createElement('canvas');
+            tile.width = tile.height = this.options.tileSize;
+            this._drawTileInternal(tile, coords, L.bind(function(img) {
+                this._tileOnLoad(done, tile);
+            }, this))
+
+            return tile;
+        }
+    })
+} else {
+    L.TileLayer.BoundaryCanvas = L.TileLayer.Canvas.extend({
+        options: {
+            // all rings of boundary should be without self-intersections or intersections with other rings
+            // zero-winding fill algorithm is used in canvas, so holes should have opposite direction to exterior ring
+            // boundary can be
+            // LatLng[] - simple polygon
+            // LatLng[][] - polygon with holes
+            // LatLng[][][] - multipolygon
+            boundary: null
+        },
+        includes: ExtendMethods,
+        initialize: function (url, options) {
+            L.Util.setOptions(this, options);
+            L.Util.setOptions(this, {async: true}); //image loading is always async
+            this._url = url;
+            this._boundaryCache = {}; //cache index "x:y:z"
+            this._mercBoundary = null;
+            this._mercBbox = null;
+        },
+        drawTile: function(canvas, tilePoint) {
+            var _this = this;
+            this._adjustTilePoint(tilePoint);
+            this._drawTileInternal(canvas, tilePoint, L.bind(this.tileDrawn, this, canvas));
+        }
+    });
+    // L.extend(L.TileLayer.BoundaryCanvas.prototype, ExtendMethods);
+}
 
 L.TileLayer.boundaryCanvas = function (url, options) {
 	return new L.TileLayer.BoundaryCanvas(url, options);

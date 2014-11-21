@@ -3,8 +3,9 @@
 Demos
 --------
 
-* [Draw boundary of a raster layer yourself] (http://aparshin.github.com/leaflet-boundary-canvas/examples/canvas-boundary-edit.html)
-* [A multipolygon with holes as a border] (http://aparshin.github.com/leaflet-boundary-canvas/examples/canvas-boundary.html)
+* [Draw boundary of a raster layer yourself](http://aparshin.github.com/leaflet-boundary-canvas/examples/canvas-boundary-edit.html)
+* [Add boundary to popular base layers](http://aparshin.github.com/leaflet-boundary-canvas/examples/canvas-boundary-providers.html)
+* [A multipolygon with holes as a border](http://aparshin.github.com/leaflet-boundary-canvas/examples/canvas-boundary.html)
 
 Usage
 -----
@@ -13,7 +14,8 @@ Usage
 var osm = new L.TileLayer.BoundaryCanvas(tileLayerUrl, options);
 map.addLayer(osm);
 ```
-where 
+
+where
  * `tileLayerUrl` - URL similar to `L.TileLayer`
  * `options` - all `L.TileLayer` options and `boundary` option.
         
@@ -24,6 +26,18 @@ where
 
 All rings of boundary should be without self-intersections or intersections with other rings. Zero-winding fill 
 algorithm is used in HTML5 Canvas, so holes should have opposite direction to exterior ring.
+
+There is a helper function to construct `L.TileLayer.BoundaryCanvas` based on already created `L.TileLayer` layer:
+
+```javascript
+var boundaryLayer = L.TileLayer.BoundaryCanvas.createFromLayer(tileLayer, options);
+```
+
+where
+ * `tileLayer` - instance of `L.TileLayer`
+ * `options` - `L.TileLayer.BoundaryCanvas` options (including `boundary`)
+ 
+This helper returns new `L.TileLayer.BoundaryCanvas` layer. It is based only on options of original layer and doesn't work for all the `L.TileLayer` descendant classes.
  
 Code Example
 -------

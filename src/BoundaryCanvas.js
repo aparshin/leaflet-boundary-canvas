@@ -226,3 +226,7 @@
 L.TileLayer.boundaryCanvas = function (url, options) {
 	return new L.TileLayer.BoundaryCanvas(url, options);
 };
+
+L.TileLayer.BoundaryCanvas.createFromLayer = function (layer, options) {
+	return new L.TileLayer.BoundaryCanvas(layer._url, L.extend({}, layer.options, options));
+};

@@ -5,7 +5,6 @@
 
 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
 	<link rel="stylesheet" href="leaflet.draw/leaflet.draw.css" />
-	<!--[if lte IE 8]><link rel="stylesheet" href="leaflet.draw/leaflet.draw.ie.css" /><![endif]-->
 
 	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
 	<script src="leaflet.draw/leaflet.draw.js"></script>
@@ -51,38 +50,35 @@
 	    osmUrl = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
 	    osmAttribution = 'Map data &copy; 2012 OpenStreetMap contributors';
 
+    L.drawLocal.draw.toolbar.buttons.polygon = L.drawLocal.draw.toolbar.buttons.rectangle = 'Draw layer boundary';
+    
 	var drawControl = new L.Control.Draw({
-		position: 'topright',
-		marker: null,
-		polyline: null,
-		circle: null,
-		polygon: {
-			title: 'Draw layer boundary',
-			allowIntersection: false,
-			drawError: {
-				color: '#b00b00',
-				timeout: 1000
-			},
-			shapeOptions: {
-				color: '#bada55'
-			}
-		}
+		draw: {
+            position: 'topright',
+            marker: null,
+            polyline: null,
+            circle: null,
+            polygon: {
+                allowIntersection: false,
+                drawError: {
+                    color: '#b00b00',
+                    timeout: 1000
+                },
+                shapeOptions: {
+                    color: '#bada55'
+                }
+            }
+        },
+        edit: false
 	});
+    
 	map.addControl(drawControl);
-	map.on('draw:poly-created', function (e) {
+	map.on('draw:created', function (e) {
 		L.TileLayer.boundaryCanvas(osmUrl, {
-			boundary: e.poly.getLatLngs(), 
+			boundary: e.layer.getLatLngs(), 
 			attribution: osmAttribution
 		}).addTo(map);
 	});
-
-	map.on('draw:rectangle-created', function (e) {
-		L.TileLayer.boundaryCanvas(osmUrl, {
-			boundary: e.rect.getLatLngs(), 
-			attribution: osmAttribution
-		}).addTo(map);
-	});
-
 	</script>
 </body>
 </html>

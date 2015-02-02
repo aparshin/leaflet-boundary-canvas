@@ -224,7 +224,7 @@ var ExtendMethods = {
         return this._boundaryCache[cacheID];
     },
 
-    _drawTileInternal: function (canvas, tilePoint, callback) {
+    _drawTileInternal: function (canvas, tilePoint, url, callback) {
         var ts = this.options.tileSize,
             tileX = ts * tilePoint.x,
             tileY = ts * tilePoint.y,
@@ -283,7 +283,7 @@ var ExtendMethods = {
             setTimeout(setPattern, 0); //IE9 bug - black tiles appear randomly if call setPattern() without timeout
         }
         
-        imageObj.src = this.getTileUrl(tilePoint);
+        imageObj.src = url;
     }
 };
 
@@ -306,9 +306,10 @@ if (L.version >= '0.8') {
             this._mercBbox = null;
         },
         createTile: function(coords, done){
-            var tile = document.createElement('canvas');
+            var tile = document.createElement('canvas'),
+                url = this.getTileUrl(coords);
             tile.width = tile.height = this.options.tileSize;
-            this._drawTileInternal(tile, coords, L.bind(done, null, null, tile));
+            this._drawTileInternal(tile, coords, url, L.bind(done, null, null, tile));
 
             return tile;
         }
@@ -334,19 +335,22 @@ if (L.version >= '0.8') {
             this._mercBbox = null;
         },
         drawTile: function(canvas, tilePoint) {
-            var _this = this;
-            this._adjustTilePoint(tilePoint);
-            this._drawTileInternal(canvas, tilePoint, L.bind(this.tileDrawn, this, canvas));
+            var adjustedTilePoint = L.extend({}, tilePoint),
+                url;
+
+            this._adjustTilePoint(adjustedTilePoint);
+            url = this.getTileUrl(adjustedTilePoint);
+            this._drawTileInternal(canvas, tilePoint, url, L.bind(this.tileDrawn, this, canvas));
         }
     });
 }
 
 L.TileLayer.boundaryCanvas = function (url, options) {
-	return new L.TileLayer.BoundaryCanvas(url, options);
+    return new L.TileLayer.BoundaryCanvas(url, options);
 };
 
 L.TileLayer.BoundaryCanvas.createFromLayer = function (layer, options) {
-	return new L.TileLayer.BoundaryCanvas(layer._url, L.extend({}, layer.options, options));
+    return new L.TileLayer.BoundaryCanvas(layer._url, L.extend({}, layer.options, options));
 };
 
 })();

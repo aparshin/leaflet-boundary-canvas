@@ -1,79 +1,5 @@
 ﻿(function() {
 
-var getEdgeIntersection = function (a, b, code, bounds, round) {
-    var dx = b.x - a.x,
-        dy = b.y - a.y,
-        min = bounds.min,
-        max = bounds.max,
-        x, y;
-
-    if (code & 8) { // top
-        x = a.x + dx * (max.y - a.y) / dy;
-        y = max.y;
-
-    } else if (code & 4) { // bottom
-        x = a.x + dx * (min.y - a.y) / dy;
-        y = min.y;
-
-    } else if (code & 2) { // right
-        x = max.x;
-        y = a.y + dy * (max.x - a.x) / dx;
-
-    } else if (code & 1) { // left
-        x = min.x;
-        y = a.y + dy * (min.x - a.x) / dx;
-    }
-
-    return new L.Point(x, y, round);
-}
-
-//this is a copy of L.PolyUtil.clipPolygon with possibility not to round result
-//see https://github.com/Leaflet/Leaflet/issues/2917
-var clipPolygon = function (points, bounds, round) {
-	var clippedPoints,
-	    edges = [1, 4, 2, 8],
-	    i, j, k,
-	    a, b,
-	    len, edge, p,
-	    lu = L.LineUtil;
-
-	for (i = 0, len = points.length; i < len; i++) {
-		points[i]._code = lu._getBitCode(points[i], bounds);
-	}
-
-	// for each edge (left, bottom, right, top)
-	for (k = 0; k < 4; k++) {
-		edge = edges[k];
-		clippedPoints = [];
-
-		for (i = 0, len = points.length, j = len - 1; i < len; j = i++) {
-			a = points[i];
-			b = points[j];
-
-			// if a is inside the clip window
-			if (!(a._code & edge)) {
-				// if b is outside the clip window (a->b goes out of screen)
-				if (b._code & edge) {
-					p = getEdgeIntersection(b, a, edge, bounds, round);
-					p._code = lu._getBitCode(p, bounds);
-					clippedPoints.push(p);
-				}
-				clippedPoints.push(a);
-
-			// else if b is inside the clip window (a->b enters the screen)
-			} else if (!(b._code & edge)) {
-				p = getEdgeIntersection(b, a, edge, bounds, round);
-				p._code = lu._getBitCode(p, bounds);
-				clippedPoints.push(p);
-			}
-		}
-		points = clippedPoints;
-	}
-
-	return points;
-};
-
-// L.TileLayer.BoundaryCanvas = L.TileLayer.Canvas.extend({
 var ExtendMethods = {
     //lazy calculation of layer's boundary in map's projection. Bounding box is also calculated
     _getOriginalMercBoundary: function () {
@@ -89,7 +15,6 @@ var ExtendMethods = {
             mercRing,
             compomentBbox;
 
-        
         if (!(b[0] instanceof Array)) {
             b = [[b]];
         } else if (!(b[0][0] instanceof Array)) {
@@ -178,7 +103,7 @@ var ExtendMethods = {
         
         for (iC = 0; iC < parentState.geometry.length; iC++) {
             clippedComponent = [];
-            clippedExternalRing = clipPolygon(parentState.geometry[iC][0], tileBbox);
+            clippedExternalRing = L.PolyUtil.clipPolygon(parentState.geometry[iC][0], tileBbox);
             if (clippedExternalRing.length === 0) {
                 continue;
             }
@@ -186,7 +111,7 @@ var ExtendMethods = {
             clippedComponent.push(clippedExternalRing);
 
             for (iR = 1; iR < parentState.geometry[iC].length; iR++) {
-                clippedHoleRing = clipPolygon(parentState.geometry[iC][iR], tileBbox);
+                clippedHoleRing = L.PolyUtil.clipPolygon(parentState.geometry[iC][iR], tileBbox);
                 if (clippedHoleRing.length > 0) {
                     clippedComponent.push(clippedHoleRing);
                 }

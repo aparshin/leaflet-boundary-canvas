@@ -1,4 +1,5 @@
-﻿BoundaryCanvas is a plugin for [Leaflet](http://leaflet.cloudmade.com/) mapping library to draw tiled raster layers with arbitrary boundary. HTML5 Canvas is used for rendering.
+﻿BoundaryCanvas is a plugin for [Leaflet](http://leaflet.cloudmade.com/) mapping library to draw tiled raster layers with arbitrary boundary.
+HTML5 Canvas is used for rendering. Works with both Leaflet 0.7.x and 0.8dev versions.
 
 Demos
 --------

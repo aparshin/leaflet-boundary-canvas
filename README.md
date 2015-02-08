@@ -21,12 +21,12 @@ where
  * `options` - all `L.TileLayer` options and `boundary` option.
         
 `boundary` option can be
- * `LatLng[]` - simple polygon
- * `LatLng[][]` - polygon with holes
- * `LatLng[][][]` - multipolygon
+ * GeoJSON object (only `Polygon` and `MultiPolygon` geometries will be used)
+ * `LatLng[]` - simple polygon (depricated)
+ * `LatLng[][]` - polygon with holes (depricated)
+ * `LatLng[][][]` - multipolygon (depricated)
 
-All rings of boundary should be without self-intersections or intersections with other rings. Zero-winding fill 
-algorithm is used in HTML5 Canvas, so holes should have opposite direction to exterior ring.
+All rings of boundary should be without self-intersections or intersections with other rings. Zero-winding fill algorithm is used in HTML5 Canvas, so holes should have opposite direction to exterior ring.
 
 There is a helper function to construct `L.TileLayer.BoundaryCanvas` based on already created `L.TileLayer` layer:
 

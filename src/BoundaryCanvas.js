@@ -1,24 +1,19 @@
 ﻿(function() {
 
 var ExtendMethods = {
-    //lazy calculation of layer's boundary in map's projection. Bounding box is also calculated
-    _getOriginalMercBoundary: function () {
-
-        if (this._mercBoundary) {
-            return this._mercBoundary;
-        }
-
-        this._mercBoundary = [];
-        var b = this.options.boundary,
-            c, r, p,
+    _toMercGeometry: function(b, isGeoJSON) {
+        var res = [];
+        var c, r, p,
             mercComponent,
             mercRing,
-            compomentBbox;
+            coords;
 
-        if (!(b[0] instanceof Array)) {
-            b = [[b]];
-        } else if (!(b[0][0] instanceof Array)) {
-            b = [b];
+        if (!isGeoJSON) {
+            if (!(b[0] instanceof Array)) {
+                b = [[b]];
+            } else if (!(b[0][0] instanceof Array)) {
+                b = [b];
+            }
         }
 
         for (c = 0; c < b.length; c++) {
@@ -26,13 +21,45 @@ var ExtendMethods = {
             for (r = 0; r < b[c].length; r++) {
                 mercRing = [];
                 for (p = 0; p < b[c][r].length; p++) {
-                    mercRing.push(this._map.project(b[c][r][p], 0));
+                    coords = isGeoJSON ? L.latLng(b[c][r][p][1], b[c][r][p][0]) : b[c][r][p];
+                    mercRing.push(this._map.project(coords, 0));
                 }
                 mercComponent.push(mercRing);
             }
-            this._mercBoundary.push(mercComponent);
+            res.push(mercComponent);
+        }
+        
+        return res;
+    },
+    
+    //lazy calculation of layer's boundary in map's projection. Bounding box is also calculated
+    _getOriginalMercBoundary: function () {
+        if (this._mercBoundary) {
+            return this._mercBoundary;
         }
 
+        var compomentBbox;
+            
+        if (L.Util.isArray(this.options.boundary)) { //Depricated: just array of coordinates
+            this._mercBoundary = this._toMercGeometry(this.options.boundary);
+        } else { //GeoJSON
+            this._mercBoundary = [];
+            var processGeoJSONObject = function(obj) {
+                if (obj.type === 'GeometryCollection') {
+                    obj.geometries.forEach(processGeoJSONObject);
+                } else if (obj.type === 'Feature') {
+                    processGeoJSONObject(obj.geometry);
+                } else if (obj.type === 'FeatureCollection') {
+                    obj.features.forEach(processGeoJSONObject);
+                } else if (obj.type === 'Polygon') {
+                    this._mercBoundary = this._mercBoundary.concat(this._toMercGeometry([obj.coordinates], true));
+                } else if (obj.type === 'MultiPolygon') {
+                    this._mercBoundary = this._mercBoundary.concat(this._toMercGeometry(obj.coordinates, true));
+                }
+            }.bind(this);
+            processGeoJSONObject(this.options.boundary);
+        }
+        
         this._mercBbox = new L.Bounds();
         for (c = 0; c < this._mercBoundary.length; c++) {
             compomentBbox = new L.Bounds(this._mercBoundary[c][0]);
@@ -62,6 +89,7 @@ var ExtendMethods = {
             clippedComponent,
             clippedExternalRing,
             clippedHoleRing,
+            cache = this._boundaryCache,
             isRingBbox = function (ring, bbox) {
                 if (ring.length !== 4) {
                     return false;
@@ -77,8 +105,8 @@ var ExtendMethods = {
                 return true;
             };
 
-        if (this._boundaryCache[cacheID]) {
-            return this._boundaryCache[cacheID];
+        if (cache[cacheID]) {
+            return cache[cacheID];
         }
 
         var mercBoundary = this._getOriginalMercBoundary(),
@@ -91,8 +119,8 @@ var ExtendMethods = {
         }
 
         if (z === 0) {
-            this._boundaryCache[cacheID] = {geometry: mercBoundary};
-            return this._boundaryCache[cacheID];
+            cache[cacheID] = {geometry: mercBoundary};
+            return cache[cacheID];
         }
 
         parentState = this._getTileGeometry(Math.floor(x / 2), Math.floor(y / 2), z - 1, true);
@@ -120,33 +148,33 @@ var ExtendMethods = {
         }
         
         if (clippedGeom.length === 0) { //we are outside of all multipolygon components
-            this._boundaryCache[cacheID] = {isOut: true};
-            return this._boundaryCache[cacheID];
+            cache[cacheID] = {isOut: true};
+            return cache[cacheID];
         }
 
         for (iC = 0; iC < clippedGeom.length; iC++) {
             if (isRingBbox(clippedGeom[iC][0], tileBbox)) {
                 //inside exterior rings and no holes
                 if (clippedGeom[iC].length === 1) {
-                    this._boundaryCache[cacheID] = {isIn: true};
-                    return this._boundaryCache[cacheID];
+                    cache[cacheID] = {isIn: true};
+                    return cache[cacheID];
                 }
             } else { //intersect exterior ring
-                this._boundaryCache[cacheID] = {geometry: clippedGeom};
-                return this._boundaryCache[cacheID];
+                cache[cacheID] = {geometry: clippedGeom};
+                return cache[cacheID];
             }
 
             for (iR = 1; iR < clippedGeom[iC].length; iR++) {
                 if (!isRingBbox(clippedGeom[iC][iR], tileBbox)) { //inside exterior ring, but have intersection with hole
-                    this._boundaryCache[cacheID] = {geometry: clippedGeom};
-                    return this._boundaryCache[cacheID];
+                    cache[cacheID] = {geometry: clippedGeom};
+                    return cache[cacheID];
                 }
             }
         }
 
         //we are inside all holes in geometry
-        this._boundaryCache[cacheID] = {isOut: true};
-        return this._boundaryCache[cacheID];
+        cache[cacheID] = {isOut: true};
+        return cache[cacheID];
     },
 
     _drawTileInternal: function (canvas, tilePoint, url, callback) {

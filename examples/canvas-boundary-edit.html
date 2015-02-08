@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Leaflet raster boundary plugin example (using drawing plugin)</title>
+    <title>Leaflet raster boundary plugin example (using drawing plugin)</title>
 
-	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
-	<link rel="stylesheet" href="leaflet.draw/leaflet.draw.css" />
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.css" />
 
-	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-	<script src="leaflet.draw/leaflet.draw.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.js"></script>
 
-	<script src="../src/BoundaryCanvas.js"></script>
+    <script src="../src/BoundaryCanvas.js"></script>
     
     <style>
         html, body, #map {
@@ -19,16 +19,16 @@
         
          #infoPanel {
             position: absolute;
-			left: 0px;
-			right: 0px;
-			top: 21px;
+            left: 0px;
+            right: 0px;
+            top: 21px;
             text-align: center;
-			z-index: 1;
+            z-index: 1;
         }
         
         #info {
-			background-color: #ffffff;
-			border-radius: 5px;
+            background-color: #ffffff;
+            border-radius: 5px;
             box-shadow: 0 1px 7px rgba(0,0,0,0.65);
             padding: 10px;
         }
@@ -42,18 +42,18 @@
         </span>
     </div>
 
-	<div id="map"></div>
+    <div id="map"></div>
 
-	<script type="text/javascript">
+    <script type="text/javascript">
 
-	var map = L.map('map').setView([55.7, 37.4], 9),
-	    osmUrl = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-	    osmAttribution = 'Map data &copy; 2012 OpenStreetMap contributors';
+    var map = L.map('map').setView([55.7, 37.4], 9),
+        osmUrl = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+        osmAttribution = 'Map data &copy; 2012 OpenStreetMap contributors';
 
     L.drawLocal.draw.toolbar.buttons.polygon = L.drawLocal.draw.toolbar.buttons.rectangle = 'Draw layer boundary';
-    
-	var drawControl = new L.Control.Draw({
-		draw: {
+
+    var drawControl = new L.Control.Draw({
+        draw: {
             position: 'topright',
             marker: null,
             polyline: null,
@@ -70,15 +70,15 @@
             }
         },
         edit: false
-	});
-    
-	map.addControl(drawControl);
-	map.on('draw:created', function (e) {
-		L.TileLayer.boundaryCanvas(osmUrl, {
-			boundary: e.layer.getLatLngs(), 
-			attribution: osmAttribution
-		}).addTo(map);
-	});
-	</script>
+    });
+
+    map.addControl(drawControl);
+    map.on('draw:created', function (e) {
+        L.TileLayer.boundaryCanvas(osmUrl, {
+            boundary: e.layer.toGeoJSON(),
+            attribution: osmAttribution
+        }).addTo(map);
+    });
+    </script>
 </body>
 </html>

@@ -78,7 +78,7 @@ var ExtendMethods = {
     //   {geometry: <LatLng[][][]>} otherwise
     _getTileGeometry: function (x, y, z, skipIntersectionCheck) {
         if ( !this.options.boundary) {
-            return {isOut: true};
+            return {isIn: true};
         }
     
         var cacheID = x + ":" + y + ":" + z,

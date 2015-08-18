@@ -18,7 +18,7 @@ where
  * `tileLayerUrl` - URL similar to `L.TileLayer`
  * `options` - all `L.TileLayer` options and additional options described below.
 
- ## Options
+## Options
  
 `boundary` option can be
  * GeoJSON object (only `Polygon` and `MultiPolygon` geometries will be used)

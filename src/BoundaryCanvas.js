@@ -1,5 +1,28 @@
 ﻿(function() {
 
+var isRingBbox = function (ring, bbox) {
+    if (ring.length !== 4) {
+        return false;
+    }
+
+    var p, sumX = 0, sumY = 0;
+
+    for (p = 0; p < 4; p++) {
+        if ((ring[p].x !== bbox.min.x && ring[p].x !== bbox.max.x) ||
+            (ring[p].y !== bbox.min.y && ring[p].y !== bbox.max.y)) {
+            return false;
+        }
+
+        sumX += ring[p].x;
+        sumY += ring[p].y;
+        
+        //bins[Number(ring[p].x === bbox.min.x) + 2 * Number(ring[p].y === bbox.min.y)] = 1;
+    }
+
+    //check that we have all 4 vertex of bbox in our geometry
+    return sumX === 2*(bbox.min.x + bbox.max.x) && sumY === 2*(bbox.min.y + bbox.max.y);
+};
+
 var ExtendMethods = {
     _toMercGeometry: function(b, isGeoJSON) {
         var res = [];
@@ -89,21 +112,7 @@ var ExtendMethods = {
             clippedComponent,
             clippedExternalRing,
             clippedHoleRing,
-            cache = this._boundaryCache,
-            isRingBbox = function (ring, bbox) {
-                if (ring.length !== 4) {
-                    return false;
-                }
-
-                var p;
-                for (p = 0; p < 4; p++) {
-                    if ((ring[p].x !== bbox.min.x && ring[p].x !== bbox.max.x) ||
-                        (ring[p].y !== bbox.min.y && ring[p].y !== bbox.max.y)) {
-                        return false;
-                    }
-                }
-                return true;
-            };
+            cache = this._boundaryCache;
 
         if (cache[cacheID]) {
             return cache[cacheID];
@@ -112,7 +121,7 @@ var ExtendMethods = {
         var mercBoundary = this._getOriginalMercBoundary(),
             ts = this.options.tileSize,
             tileBbox = new L.Bounds(new L.Point(x * ts / zCoeff, y * ts / zCoeff), new L.Point((x + 1) * ts / zCoeff, (y + 1) * ts / zCoeff));
-            
+
         //fast check intersection
         if (!skipIntersectionCheck && !tileBbox.intersects(this._mercBbox)) {
             return {isOut: true};
@@ -128,7 +137,7 @@ var ExtendMethods = {
         if (parentState.isOut || parentState.isIn) {
             return parentState;
         }
-        
+
         for (iC = 0; iC < parentState.geometry.length; iC++) {
             clippedComponent = [];
             clippedExternalRing = L.PolyUtil.clipPolygon(parentState.geometry[iC][0], tileBbox);

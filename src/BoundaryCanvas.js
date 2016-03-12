@@ -187,26 +187,26 @@ var ExtendMethods = {
     },
 
     _drawTileInternal: function (canvas, tilePoint, url, callback) {
+        var zoom = this._getZoomForUrl(),
+            state = this._getTileGeometry(tilePoint.x, tilePoint.y, zoom);
+
+        if (state.isOut) {
+            callback();
+            return;
+        }
+
         var ts = this.options.tileSize,
             tileX = ts * tilePoint.x,
             tileY = ts * tilePoint.y,
-            zoom = this._getZoomForUrl(),
             zCoeff = Math.pow(2, zoom),
             ctx = canvas.getContext('2d'),
             imageObj = new Image(),
             _this = this;
             
         var setPattern = function () {
-            
-            var state = _this._getTileGeometry(tilePoint.x, tilePoint.y, zoom),
-                c, r, p,
+            var c, r, p,
                 pattern,
                 geom;
-
-            if (state.isOut) {
-                callback();
-                return;
-            }
 
             if (!state.isIn) {
                 geom = state.geometry;

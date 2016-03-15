@@ -30,7 +30,7 @@
     var withBoundary = function(providerName) {
         return L.TileLayer.BoundaryCanvas.createFromLayer(
             L.tileLayer.provider(providerName),
-            {boundary: geom}
+            {boundary: geom, trackAttribution: true}
         )
     }
     

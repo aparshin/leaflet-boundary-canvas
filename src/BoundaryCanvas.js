@@ -93,6 +93,57 @@ var ExtendMethods = {
         return this._mercBoundary;
     },
 
+    _getClippedGeometry: function(geom, bounds) {
+        var clippedGeom = [],
+            clippedComponent,
+            clippedExternalRing,
+            clippedHoleRing,
+            iC, iR;
+            
+        for (iC = 0; iC < geom.length; iC++) {
+            clippedComponent = [];
+            clippedExternalRing = L.PolyUtil.clipPolygon(geom[iC][0], bounds);
+            if (clippedExternalRing.length === 0) {
+                continue;
+            }
+
+            clippedComponent.push(clippedExternalRing);
+
+            for (iR = 1; iR < geom[iC].length; iR++) {
+                clippedHoleRing = L.PolyUtil.clipPolygon(geom[iC][iR], bounds);
+                if (clippedHoleRing.length > 0) {
+                    clippedComponent.push(clippedHoleRing);
+                }
+            }
+            clippedGeom.push(clippedComponent);
+        }
+        
+        if (clippedGeom.length === 0) { //we are outside of all multipolygon components
+            return {isOut: true};
+        }
+
+        for (iC = 0; iC < clippedGeom.length; iC++) {
+            if (isRingBbox(clippedGeom[iC][0], bounds)) {
+                //inside exterior rings and no holes
+                if (clippedGeom[iC].length === 1) {
+                    return {isIn: true};
+                }
+            } else { //intersects exterior ring
+                return {geometry: clippedGeom};
+            }
+
+            for (iR = 1; iR < clippedGeom[iC].length; iR++) {
+                //inside exterior ring, but have intersection with a hole
+                if (!isRingBbox(clippedGeom[iC][iR], bounds)) {
+                    return {geometry: clippedGeom};
+                }
+            }
+        }
+
+        //we are inside all holes in geometry
+        return {isOut: true};
+    },
+
     // Calculates intersection of original boundary geometry and tile boundary.
     // Uses quadtree as cache to speed-up intersection.
     // Return 
@@ -107,11 +158,6 @@ var ExtendMethods = {
         var cacheID = x + ":" + y + ":" + z,
             zCoeff = Math.pow(2, z),
             parentState,
-            clippedGeom = [],
-            iC, iR,
-            clippedComponent,
-            clippedExternalRing,
-            clippedHoleRing,
             cache = this._boundaryCache;
 
         if (cache[cacheID]) {
@@ -137,52 +183,8 @@ var ExtendMethods = {
         if (parentState.isOut || parentState.isIn) {
             return parentState;
         }
-
-        for (iC = 0; iC < parentState.geometry.length; iC++) {
-            clippedComponent = [];
-            clippedExternalRing = L.PolyUtil.clipPolygon(parentState.geometry[iC][0], tileBbox);
-            if (clippedExternalRing.length === 0) {
-                continue;
-            }
-
-            clippedComponent.push(clippedExternalRing);
-
-            for (iR = 1; iR < parentState.geometry[iC].length; iR++) {
-                clippedHoleRing = L.PolyUtil.clipPolygon(parentState.geometry[iC][iR], tileBbox);
-                if (clippedHoleRing.length > 0) {
-                    clippedComponent.push(clippedHoleRing);
-                }
-            }
-            clippedGeom.push(clippedComponent);
-        }
         
-        if (clippedGeom.length === 0) { //we are outside of all multipolygon components
-            cache[cacheID] = {isOut: true};
-            return cache[cacheID];
-        }
-
-        for (iC = 0; iC < clippedGeom.length; iC++) {
-            if (isRingBbox(clippedGeom[iC][0], tileBbox)) {
-                //inside exterior rings and no holes
-                if (clippedGeom[iC].length === 1) {
-                    cache[cacheID] = {isIn: true};
-                    return cache[cacheID];
-                }
-            } else { //intersect exterior ring
-                cache[cacheID] = {geometry: clippedGeom};
-                return cache[cacheID];
-            }
-
-            for (iR = 1; iR < clippedGeom[iC].length; iR++) {
-                if (!isRingBbox(clippedGeom[iC][iR], tileBbox)) { //inside exterior ring, but have intersection with hole
-                    cache[cacheID] = {geometry: clippedGeom};
-                    return cache[cacheID];
-                }
-            }
-        }
-
-        //we are inside all holes in geometry
-        cache[cacheID] = {isOut: true};
+        cache[cacheID] = this._getClippedGeometry(parentState.geometry, tileBbox);
         return cache[cacheID];
     },
 
@@ -246,6 +248,40 @@ var ExtendMethods = {
         }
         
         imageObj.src = url;
+    },
+    
+    onAdd: function(map) {
+        (L.TileLayer.Canvas || L.TileLayer).prototype.onAdd.call(this, map);
+        
+        if (this.options.trackAttribution) {
+            map.on('moveend', this._updateAttribution, this);
+            this._updateAttribution();
+        }
+    },
+    
+    onRemove: function(map) {
+        (L.TileLayer.Canvas || L.TileLayer).prototype.onRemove.call(this, map);
+        
+        if (this.options.trackAttribution) {
+            map.off('moveend', this._updateAttribution, this);
+            if (!this._attributionRemoved) {
+                var attribution = L.TileLayer.BoundaryCanvas.prototype.getAttribution.call(this);
+                map.attributionControl.removeAttribution(attribution);
+            }
+        }
+    },
+    
+    _updateAttribution: function() {
+        var geom = this._getOriginalMercBoundary(),
+            mapBounds = this._map.getBounds(),
+            mercBounds = L.bounds(this._map.project(mapBounds.getSouthWest(), 0), this._map.project(mapBounds.getNorthEast(), 0)),
+            state = this._getClippedGeometry(geom, mercBounds);
+        
+        if (this._attributionRemoved !== !!state.isOut) {
+            var attribution = L.TileLayer.BoundaryCanvas.prototype.getAttribution.call(this);
+            this._map.attributionControl[state.isOut ? 'removeAttribution' : 'addAttribution'](attribution);
+            this._attributionRemoved = !!state.isOut;
+        }
     }
 };
 
@@ -266,6 +302,11 @@ if (L.version >= '0.8') {
             this._boundaryCache = {}; //cache index "x:y:z"
             this._mercBoundary = null;
             this._mercBbox = null;
+            
+            if (this.options.trackAttribution) {
+                this._attributionRemoved = true;
+                this.getAttribution = null;
+            }
         },
         createTile: function(coords, done){
             var tile = document.createElement('canvas'),
@@ -295,7 +336,13 @@ if (L.version >= '0.8') {
             this._boundaryCache = {}; //cache index "x:y:z"
             this._mercBoundary = null;
             this._mercBbox = null;
+            
+            if (this.options.trackAttribution) {
+                this._attributionRemoved = true;
+                this.getAttribution = null;
+            }
         },
+        
         drawTile: function(canvas, tilePoint) {
             var adjustedTilePoint = L.extend({}, tilePoint),
                 url;

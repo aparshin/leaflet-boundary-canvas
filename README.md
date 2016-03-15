@@ -30,6 +30,8 @@ All rings of boundary should be without self-intersections or intersections with
 
 `crossOrigin` option (Boolean) should be set if you want to request CORS enabled images. It is not required for the plugin itself, but can be usefull for potential plugin extensions.
 
+`trackAttribution` option (Boolean) can be set to show layer's attribution only when map boundary intersects layer's geometry. Additional calculations are required after each map movement (critical for complex boundaries).
+
 ## Contruction from Other Layers
 
 There is a helper function to construct `L.TileLayer.BoundaryCanvas` based on already created `L.TileLayer` layer:

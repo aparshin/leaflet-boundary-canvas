@@ -35,7 +35,8 @@
 
     var osm = L.TileLayer.boundaryCanvas(osmUrl, {
         boundary: geom, 
-        attribution: osmAttribution
+        attribution: osmAttribution,
+        trackAttribution: true
     }).addTo(map);
 
     </script>

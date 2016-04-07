@@ -350,6 +350,11 @@ if (L.version >= '0.8') {
             this._adjustTilePoint(adjustedTilePoint);
             url = this.getTileUrl(adjustedTilePoint);
             this._drawTileInternal(canvas, tilePoint, url, L.bind(this.tileDrawn, this, canvas));
+
+            //Leaflet v0.7.x bugfix (L.Tile.Canvas doesn't support maxNativeZoom option)
+            if (this._getTileSize() !== this.options.tileSize) {
+                canvas.style.width = canvas.style.height = this._getTileSize() + 'px';
+            }
         }
     });
 }

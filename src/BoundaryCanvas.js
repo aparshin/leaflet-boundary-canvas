@@ -1,5 +1,7 @@
 ﻿(function() {
 
+'use strict';
+
 var isRingBbox = function (ring, bbox) {
     if (ring.length !== 4) {
         return false;
@@ -61,7 +63,7 @@ var ExtendMethods = {
             return this._mercBoundary;
         }
 
-        var compomentBbox;
+        var compomentBbox, c;
             
         if (L.Util.isArray(this.options.boundary)) { //Depricated: just array of coordinates
             this._mercBoundary = this._toMercGeometry(this.options.boundary);

@@ -33,6 +33,8 @@ var ExtendMethods = {
             mercRing,
             coords;
 
+        var zoomOffset = this.options.zoomOffset ? (-this.options.zoomOffset) : 0;
+
         if (!isGeoJSON) {
             if (!(b[0] instanceof Array)) {
                 b = [[b]];
@@ -47,7 +49,7 @@ var ExtendMethods = {
                 mercRing = [];
                 for (p = 0; p < b[c][r].length; p++) {
                     coords = isGeoJSON ? L.latLng(b[c][r][p][1], b[c][r][p][0]) : b[c][r][p];
-                    mercRing.push(this._map.project(coords, 0));
+                    mercRing.push(this._map.project(coords, zoomOffset));
                 }
                 mercComponent.push(mercRing);
             }
